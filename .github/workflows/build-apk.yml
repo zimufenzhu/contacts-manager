@@ -73,8 +73,9 @@ jobs:
         mv cmdline-tools/* android-sdk/cmdline-tools/latest/
         
         # Also create the legacy directory structure that buildozer might expect
-        mkdir -p android-sdk/tools/bin
-        ln -s $HOME/android-sdk/cmdline-tools/latest/* $HOME/android-sdk/tools/
+        mkdir -p android-sdk/tools
+        # Copy files instead of creating symbolic links to avoid conflicts
+        cp -r android-sdk/cmdline-tools/latest/* android-sdk/tools/
         
         export ANDROID_HOME=$HOME/android-sdk
         export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
