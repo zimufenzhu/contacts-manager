@@ -27,7 +27,7 @@ jobs:
         # 安装基本构建工具
         for i in {1..3}; do
           echo "Attempt $i to install build tools"
-          if sudo apt install -y build-essential libgl1-mesa-dev libgles2-mesa-dev && break; then
+          if sudo apt install -y build-essential libgl1-mesa-dev libgles2-mesa-dev libltdl-dev libtool autoconf automake && break; then
             echo "Build tools installed successfully"
             break
           else
@@ -43,7 +43,7 @@ jobs:
         # 安装Java和其他依赖
         for i in {1..3}; do
           echo "Attempt $i to install Java and other dependencies"
-          if sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev && break; then
+          if sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev libltdl-dev && break; then
             echo "Java and other dependencies installed successfully"
             break
           else
@@ -103,6 +103,16 @@ jobs:
         echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
         echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
         echo "$ANDROID_HOME/build-tools/34.0.0" >> $GITHUB_PATH
+        
+    - name: Setup libtool and autoconf for libffi
+      run: |
+        # 重新配置libtool和autoconf以解决LT_SYS_SYMBOL_USCORE问题
+        echo "Setting up libtool and autoconf..."
+        libtoolize --force || echo "libtoolize failed, continuing anyway"
+        aclocal || echo "aclocal failed, continuing anyway"
+        autoheader || echo "autoheader failed, continuing anyway"
+        automake --force-missing --add-missing || echo "automake failed, continuing anyway"
+        autoconf || echo "autoconf failed, continuing anyway"
 
     - name: Install Python dependencies
       run: |
