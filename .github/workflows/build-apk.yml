@@ -80,11 +80,23 @@ jobs:
         export ANDROID_HOME=$HOME/android-sdk
         export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
         
+        # 验证Android SDK安装
+        echo "ANDROID_HOME is set to: $ANDROID_HOME"
+        echo "PATH is set to: $PATH"
+        ls -la $ANDROID_HOME/
+        ls -la $ANDROID_HOME/cmdline-tools/latest/
+        
         # 接受所有Android SDK许可证
+        echo "Accepting Android SDK licenses..."
         yes | sdkmanager --licenses || true
         
         # 安装必要的构建工具
+        echo "Installing Android build tools..."
         sdkmanager "build-tools;34.0.0" "platforms;android-34" "platform-tools" || true
+        
+        # 验证sdkmanager是否正常工作
+        echo "Verifying sdkmanager..."
+        sdkmanager --list_installed || true
         
         # 将Android SDK路径设置为环境变量供后续步骤使用
         echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
@@ -153,7 +165,45 @@ jobs:
 
     - name: Build APK
       run: |
-        buildozer android debug
+        # 显示环境变量以进行调试
+        echo "Environment variables:"
+        env | grep -i android || true
+        echo "PATH: $PATH"
+        
+        # 显示当前目录结构
+        echo "Current directory structure:"
+        ls -la
+        
+        # 显示buildozer配置
+        echo "Buildozer config:"
+        cat buildozer.spec || true
+        
+        # 检查Android SDK路径是否存在
+        echo "Checking Android SDK path..."
+        if [ -d "$ANDROID_HOME" ]; then
+          echo "Android SDK directory exists: $ANDROID_HOME"
+          ls -la $ANDROID_HOME/
+        else
+          echo "ERROR: Android SDK directory does not exist: $ANDROID_HOME"
+          exit 1
+        fi
+        
+        # 检查必要的工具是否存在
+        echo "Checking for necessary tools..."
+        which sdkmanager || echo "sdkmanager not found"
+        which adb || echo "adb not found"
+        
+        # 构建APK
+        echo "Building APK..."
+        buildozer -v android debug
+        
+        # 如果构建失败，显示更多调试信息
+        if [ $? -ne 0 ]; then
+          echo "Build failed. Showing debug information..."
+          echo "Buildozer logs:"
+          find .buildozer -name "*.log" -exec cat {} \; 2>/dev/null || echo "No log files found"
+          exit 1
+        fi
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
